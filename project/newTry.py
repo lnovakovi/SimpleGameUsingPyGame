@@ -42,7 +42,8 @@ class Player(pygame.sprite.Sprite):
         #make that color transparent,ignore it
         #every sprite has rectangle around it
         self.rect= self.image.get_rect()
-        self.rect.center = (width/2,height/2) #on the center of rectangle
+        self.rect.y = height/2
+        self.rect.x = width
         self.y_speed = 0
         self.x_speed =0
 
@@ -64,8 +65,8 @@ class Player(pygame.sprite.Sprite):
             self.rect.top = 0
         if self.rect.left < 0:
             self.rect.left = 0
-        if self.rect.right < (width - self.rect.width):
-            self.rect.right = width - self.rect.width
+        if self.rect.right > width:
+            self.rect.right = width 
         self.rect.y += self.y_speed
         self.rect.x += self.x_speed
         
@@ -77,7 +78,8 @@ class Player(pygame.sprite.Sprite):
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(mob_img,(40,30))
+        self.image = random.choice(mob_images)
+        #self.image = pygame.transform.scale(self.image,(40,30))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.y = random.randrange(height - self.rect.height)
@@ -110,31 +112,52 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.left > width or self.rect.right < 0:
             self.kill
         
-        
+def show_go_screen():
+    draw_text(screen,"SPACE STATION",64, width/2,height/4)
+    draw_text(screen,"Arrow keys to move, space to fire",22, width/2,height/2)
+    draw_text(screen, "Press a key to begin",18,width/2,height*3/4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            #check also for quit event
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                waiting = False
+    
 
 #game-graphics
-background = pygame.image.load(path.join(img_dir,"background.jpg")).convert()
+background = pygame.image.load(path.join(img_dir,"backgrounds.jpg")).convert()
 background = pygame.transform.scale(background,(800,600))
 background_rect = background.get_rect()
 player_img= pygame.image.load(path.join(img_dir,"p1_jump.png")).convert()
-mob_img = pygame.image.load(path.join(img_dir,"spaceStation.png")).convert()
+mob_images=[]
+mob_list = ["spaceStation.png","spaceStation1.png"]
+for img in mob_list: #add pictures of mobs in list
+    mob_images.append(pygame.image.load(path.join(img_dir,img)).convert())
+
 bullet_img = pygame.image.load(path.join(img_dir,"bullet.png")).convert()
-
-all_sprites=pygame.sprite.Group()
-mobs = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
-player=Player()
-all_sprites.add(player)
-
-for i in range(8): #8mobs
-    m=Mob()
-    all_sprites.add(m)
-    mobs.add(m)
-score = 0
 
 #Game loop
 running = True
+game_over=True
 while running: #30 puta u sekundi se izvrti (FPS)
+    if game_over:
+        show_go_screen()
+        game_over=False
+        all_sprites=pygame.sprite.Group()
+        mobs = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        player=Player()
+        all_sprites.add(player)
+
+        for i in range(10): #10mobs
+            m=Mob()
+            all_sprites.add(m)
+            mobs.add(m)
+            score = 0
     #keep loop running at the right speed
     clock.tick(FPS)
     #Events
@@ -159,7 +182,7 @@ while running: #30 puta u sekundi se izvrti (FPS)
     #check if mob hit the player
     hits = pygame.sprite.spritecollide(player,mobs,False) #sprite and group
     if hits:
-        running = False
+        game_over = True
     
     #Draw/render
     screen.fill(BLACK)
